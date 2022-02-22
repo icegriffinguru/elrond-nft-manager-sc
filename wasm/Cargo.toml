@@ -1,5 +1,5 @@
 [package]
-name = "elrond-nft-simple-sc-wasm"
+name = "elrond-nftmanager-wasm"
 version = "0.0.0"
 authors = [ "you",]
 edition = "2018"
@@ -20,7 +20,7 @@ lto = true
 debug = false
 panic = "abort"
 
-[dependencies.elrond-nft-simple-sc]
+[dependencies.elrond-nftmanager]
 path = ".."
 
 [dependencies.elrond-wasm-node]

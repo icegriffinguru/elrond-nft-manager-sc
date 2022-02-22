@@ -61,17 +61,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "elrond-nft-simple-sc"
+name = "elrond-nftmanager"
 version = "0.0.0"
 dependencies = [
  "elrond-wasm",
 ]
 
 [[package]]
-name = "elrond-nft-simple-sc-wasm"
+name = "elrond-nftmanager-wasm"
 version = "0.0.0"
 dependencies = [
- "elrond-nft-simple-sc",
+ "elrond-nftmanager",
  "elrond-wasm-node",
  "elrond-wasm-output",
 ]
@@ -130,9 +130,9 @@ checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
 name = "getrandom"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "418d37c8b1d42553c93648be529cb70f920d3baf8ef469b74b9638df426e0b4c"
+checksum = "d39cd93900197114fa1fcb7ae84ca742095eed9442088988ae74fa744e930e77"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",

@@ -5,8 +5,9 @@
 #![no_std]
 
 elrond_wasm_node::wasm_endpoints! {
-    elrond_nft_simple_sc
+    elrond_nftmanager
     (
+        callBack
         getBaseUri
         getMintCount
         getNftTokenId

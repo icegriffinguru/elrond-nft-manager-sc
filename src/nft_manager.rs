@@ -16,8 +16,8 @@ pub struct NftAttributes {
     pub creation_timestamp: u64,
 }
 
-#[elrond_wasm::module]
-pub trait NftModule {
+#[elrond_wasm::contract]
+pub trait NftManager {
     #[init]
     fn init(&self, payment_token_id: TokenIdentifier, nft_token_price: BigUint, royalties: u32, base_uri: ManagedBuffer) {
         require!(royalties <= ROYALTIES_MAX, "royalties cannot exceed 100%");
