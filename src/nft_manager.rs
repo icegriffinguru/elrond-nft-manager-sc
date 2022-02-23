@@ -77,23 +77,6 @@ pub trait NftManager {
             .async_call()
     }
 
-    #[callback]
-    fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>) {
-        match result {
-            ManagedAsyncCallResult::Ok(token_id) => {
-                self.nft_token_id().set(&token_id);
-            },
-            ManagedAsyncCallResult::Err(_) => {
-                let caller = self.blockchain().get_owner_address();
-                let (returned_tokens, token_id) = self.call_value().payment_token_pair();
-                if token_id.is_egld() && returned_tokens > 0 {
-                    self.send()
-                        .direct(&caller, &token_id, 0, &returned_tokens, &[]);
-                }
-            },
-        }
-    }
-
     #[only_owner]
     #[endpoint(pauseMinting)]
     fn pause_minting(&self) -> SCResult<()> {
@@ -112,7 +95,28 @@ pub trait NftManager {
         Ok(())
     }
 
-    
+    // return estd of token_id
+    // return egld if token_id is not given
+    #[only_owner]
+    #[endpoint(withdraw)]
+    fn withdraw(&self, #[var_args] token_id: OptionalArg<TokenIdentifier>) -> SCResult<()> {
+        let payment_token_id = if let OptionalArg::Some(ti) = token_id {
+            ti
+        }
+        else {
+            TokenIdentifier::egld()
+        };
+
+        let balance = self.blockchain().get_sc_balance(&payment_token_id, 0);
+        require!(balance != BigUint::zero(), "not enough balance");
+
+        let caller = self.blockchain().get_caller();
+        
+        self.send().direct(&caller, &payment_token_id, 0, &balance, &[]);
+
+        Ok(())
+    }
+
 
     /// endpoint
 
@@ -193,7 +197,22 @@ pub trait NftManager {
 
     // callbacks
 
-    
+    #[callback]
+    fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>) {
+        match result {
+            ManagedAsyncCallResult::Ok(token_id) => {
+                self.nft_token_id().set(&token_id);
+            },
+            ManagedAsyncCallResult::Err(_) => {
+                let caller = self.blockchain().get_owner_address();
+                let (returned_tokens, token_id) = self.call_value().payment_token_pair();
+                if token_id.is_egld() && returned_tokens > 0 {
+                    self.send()
+                        .direct(&caller, &token_id, 0, &returned_tokens, &[]);
+                }
+            },
+        }
+    }
 
     /// storage
 

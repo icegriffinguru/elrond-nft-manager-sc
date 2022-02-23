@@ -20,20 +20,22 @@ deploy() {
     --bytecode="$CONTRACT"  \
     --recall-nonce \
     --pem=${WALLET} \
-    --gas-limit=600000000 \
+    --gas-limit=50000000 \
     --send --outfile="deploy-devnet.interaction.json" \
     --proxy="${PROXY}" \
     --arguments ${PAYMENT_TOKEN_ID_HEX} ${NFT_TOKEN_PRICE} ${TOKEN_PRICE} ${ROYALTIES} ${BASE_URI_HEX} \
+    --metadata-payable  \
+    --metadata-payable-by-sc \
     --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="deploy-devnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="deploy-devnet.interaction.json" --expression="data['emitted_tx']['address']")
+    # TRANSACTION=$(erdpy data parse --file="deploy-devnet.interaction.json" --expression="data['emitted_tx']['hash']")
+    # ADDRESS=$(erdpy data parse --file="deploy-devnet.interaction.json" --expression="data['emitted_tx']['address']")
 
-    erdpy data store --key=address-devnet --value=${ADDRESS}
-    erdpy data store --key=deployTransaction-devnet --value=${TRANSACTION}
+    # erdpy data store --key=address-devnet --value=${ADDRESS}
+    # erdpy data store --key=deployTransaction-devnet --value=${TRANSACTION}
 
-    echo ""
-    echo "Smart contract address: ${ADDRESS}"
+    # echo ""
+    # echo "Smart contract address: ${ADDRESS}"
 }
 
 # issueNft() {

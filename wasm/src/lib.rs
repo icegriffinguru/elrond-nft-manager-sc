@@ -21,5 +21,6 @@ elrond_wasm_node::wasm_endpoints! {
         pauseMinting
         setLocalRoles
         startMinting
+        withdraw
     )
 }
