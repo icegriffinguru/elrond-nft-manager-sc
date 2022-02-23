@@ -1,11 +1,12 @@
 ALICE="./wallets/alice.pem" # PEM path
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
-# PROXY=https://devnet-gateway.elrond.com
-# CHAIN_ID=D
-PROXY=https://testnet-gateway.elrond.com
-CHAIN_ID=T
+PROXY=https://devnet-gateway.elrond.com
+CHAIN_ID=D
+# PROXY=https://testnet-gateway.elrond.com
+# CHAIN_ID=T
 
+CONTRACT="output/elrond-nftmanager.wasm"
 PAYMENT_TOKEN_ID="SVEN-4b35b0"
 NFT_TOKEN_PRICE=1000000000000000
 ROYALTIES=300
@@ -16,11 +17,12 @@ BASE_URI_HEX="0x$(echo -n ${BASE_URI} | xxd -p -u | tr -d '\n')"
 
 deploy() {
     erdpy --verbose contract deploy \
-    --project=${PROJECT} \
+    --bytecode="$CONTRACT"  \
     --recall-nonce \
     --pem=${ALICE} \
-    --gas-limit=100000000 \
-    --send --outfile="deploy-devnet.interaction.json" --proxy=${PROXY} \
+    --gas-limit=600000000 \
+    --send --outfile="deploy-devnet.interaction.json" \
+    --proxy="${PROXY}" \
     --arguments ${PAYMENT_TOKEN_ID_HEX} ${NFT_TOKEN_PRICE} ${TOKEN_PRICE} ${ROYALTIES} ${BASE_URI_HEX} \
     --chain=${CHAIN_ID} || return
 
