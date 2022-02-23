@@ -1,4 +1,4 @@
-ALICE="./wallets/alice.pem" # PEM path
+WALLET="./wallets/wallet.pem" # PEM path
 ADDRESS=$(erdpy data load --key=address-devnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-devnet)
 PROXY=https://devnet-gateway.elrond.com
@@ -19,7 +19,7 @@ deploy() {
     erdpy --verbose contract deploy \
     --bytecode="$CONTRACT"  \
     --recall-nonce \
-    --pem=${ALICE} \
+    --pem=${WALLET} \
     --gas-limit=600000000 \
     --send --outfile="deploy-devnet.interaction.json" \
     --proxy="${PROXY}" \

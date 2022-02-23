@@ -9,10 +9,10 @@ publish = false
 path = "src/nft_manager.rs"
 
 [dependencies.elrond-wasm]
-version = "0.27.0"
+version = "0.27.4"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.27.0"
+version = "0.27.4"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

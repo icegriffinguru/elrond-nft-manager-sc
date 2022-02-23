@@ -3,18 +3,12 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-use elrond_wasm::elrond_codec::TopEncode;
-
 const NFT_AMOUNT: u32 = 1;
 const ROYALTIES_MAX: u32 = 10_000;
 
 const URI_SLASH: &[u8] = "/".as_bytes();
 const HASH_TAG: &[u8] = "#".as_bytes();
-
-#[derive(TypeAbi, TopEncode, TopDecode)]
-pub struct NftAttributes {
-    pub creation_timestamp: u64,
-}
+const CREATION_TIME_KEY_NAME: &[u8] = "creatime:".as_bytes();
 
 #[elrond_wasm::contract]
 pub trait NftManager {
@@ -83,6 +77,23 @@ pub trait NftManager {
             .async_call()
     }
 
+    #[callback]
+    fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>) {
+        match result {
+            ManagedAsyncCallResult::Ok(token_id) => {
+                self.nft_token_id().set(&token_id);
+            },
+            ManagedAsyncCallResult::Err(_) => {
+                let caller = self.blockchain().get_owner_address();
+                let (returned_tokens, token_id) = self.call_value().payment_token_pair();
+                if token_id.is_egld() && returned_tokens > 0 {
+                    self.send()
+                        .direct(&caller, &token_id, 0, &returned_tokens, &[]);
+                }
+            },
+        }
+    }
+
     #[only_owner]
     #[endpoint(pauseMinting)]
     fn pause_minting(&self) -> SCResult<()> {
@@ -131,22 +142,23 @@ pub trait NftManager {
         );
     }
 
-    /// private
+    // /// private
 
     fn _mint(&self) -> u64 {
         self.require_token_issued();
 
         let nft_token_id = self.nft_token_id().get();
 
-        let attributes = NftAttributes {
-            creation_timestamp: self.blockchain().get_block_timestamp(),
-        };
-        let mut serialized_attributes = ManagedBuffer::new();
-        if let core::result::Result::Err(err) = attributes.top_encode(&mut serialized_attributes) {
-            sc_panic!("Attributes encode error: {}", err.message_bytes());
-        }
+        let creation_time_key = ManagedBuffer::new_from_bytes(CREATION_TIME_KEY_NAME);
+        let creation_time = ManagedBuffer::from(&self.blockchain().get_block_timestamp().to_ne_bytes());
+        let mut attributes = ManagedBuffer::new();
+        attributes.append(&creation_time_key);
+        attributes.append(&creation_time);
 
-        let attributes_hash: ManagedByteArray<Self::Api, 32> = self.crypto().sha256(&serialized_attributes);
+        let attributes_hash = self
+            .crypto()
+            .sha256_legacy(&attributes.to_boxed_bytes().as_slice());
+        let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
         let mint_count = self.mint_count().get();
 
@@ -165,7 +177,7 @@ pub trait NftManager {
             &BigUint::from(NFT_AMOUNT),
             &name,
             &BigUint::from(self.royalties().get()),
-            attributes_hash.as_managed_buffer(),
+            &hash_buffer,
             &attributes,
             &uris,
         );
@@ -181,22 +193,7 @@ pub trait NftManager {
 
     // callbacks
 
-    #[callback]
-    fn issue_callback(&self, #[call_result] result: ManagedAsyncCallResult<TokenIdentifier>) {
-        match result {
-            ManagedAsyncCallResult::Ok(token_id) => {
-                self.nft_token_id().set(&token_id);
-            },
-            ManagedAsyncCallResult::Err(_) => {
-                let caller = self.blockchain().get_owner_address();
-                let (returned_tokens, token_id) = self.call_value().payment_token_pair();
-                if token_id.is_egld() && returned_tokens > 0 {
-                    self.send()
-                        .direct(&caller, &token_id, 0, &returned_tokens, &[]);
-                }
-            },
-        }
-    }
+    
 
     /// storage
 
