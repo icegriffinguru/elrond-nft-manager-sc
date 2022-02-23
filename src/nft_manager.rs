@@ -19,7 +19,7 @@ pub struct NftAttributes {
 #[elrond_wasm::contract]
 pub trait NftManager {
     #[init]
-    fn init(&self, payment_token_id: TokenIdentifier, nft_token_price: BigUint, royalties: u32, base_uri: ManagedBuffer) {
+    fn init(&self, payment_token_id: TokenIdentifier, nft_token_price: BigUint, royalties: u32, base_uri: ManagedBuffer) -> SCResult<()> {
         require!(royalties <= ROYALTIES_MAX, "royalties cannot exceed 100%");
         require!(
             payment_token_id.is_valid_esdt_identifier(),
@@ -33,6 +33,8 @@ pub trait NftManager {
 
         // set mint_count to 0 for indexing
         self.mint_count().set(0u64);
+
+        Ok(())
     }
 
     // endpoints - owner-only
