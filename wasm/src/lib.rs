@@ -8,7 +8,8 @@ elrond_wasm_node::wasm_endpoints! {
     elrond_nftmanager
     (
         callBack
-        getBaseUri
+        getImageBaseUri
+        getMetadataBaseUri
         getMintCount
         getNftTokenId
         getNftTokenName
@@ -16,7 +17,7 @@ elrond_wasm_node::wasm_endpoints! {
         getPaymentTokenId
         getRoyalties
         isPaused
-        issueToken
+        issueNft
         mint
         pauseMinting
         setLocalRoles

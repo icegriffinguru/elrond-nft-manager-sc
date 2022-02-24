@@ -26,14 +26,6 @@
                 "0x0000000000000000fb1397e8225ea85e0f0e6e8c7b126d0016ccbde0e667151e": {
                     "nonce": "0",
                     "balance": "0",
-                    "storage": {
-                        "str:base_uri": "0x626173655f757269",
-                        "str:mint_count": "0x",
-                        "str:nft_token_name": "0x496365576f726c64",
-                        "str:nft_token_price": "0x0de0b6b3a7640000",
-                        "str:payment_token_id": "0x544f4b454e2d313233343536",
-                        "str:royalties": "0x012c"
-                    },
                     "code": "file:../output/elrond-nftmanager.wasm",
                     "owner": "0x66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
                 }

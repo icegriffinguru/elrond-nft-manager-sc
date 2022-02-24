@@ -1,5 +1,7 @@
 #![no_std]
 
+extern crate alloc;
+
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
@@ -9,24 +11,27 @@ const ROYALTIES_MAX: u32 = 10_000;
 const URI_SLASH: &[u8] = "/".as_bytes();
 const HASH_TAG: &[u8] = "#".as_bytes();
 const CREATION_TIME_KEY_NAME: &[u8] = "creatime:".as_bytes();
+const IMAGE_FILE_EXTENSION: &[u8] = ".png".as_bytes();
+const METADATA_FILE_EXTENSION: &[u8] = ".json".as_bytes();
 
 #[elrond_wasm::contract]
 pub trait NftManager {
     #[init]
-    fn init(&self, payment_token_id: TokenIdentifier, nft_token_price: BigUint, royalties: u32, base_uri: ManagedBuffer) -> SCResult<()> {
+    fn init(&self, payment_token_id: TokenIdentifier, nft_token_price: BigUint, royalties: u32, image_base_uri: ManagedBuffer, metadata_base_uri: ManagedBuffer) -> SCResult<()> {
         require!(royalties <= ROYALTIES_MAX, "royalties cannot exceed 100%");
         require!(
-            payment_token_id.is_valid_esdt_identifier(),
+            payment_token_id.is_egld() || payment_token_id.is_valid_esdt_identifier(),
             "invalid token identifier provided"
         );
 
         self.payment_token_id().set(&payment_token_id);
         self.nft_token_price().set(&nft_token_price);
         self.royalties().set(royalties);
-        self.base_uri().set(&base_uri);
+        self.image_base_uri().set(&image_base_uri);
+        self.metadata_base_uri().set(&metadata_base_uri);
 
         // set mint_count to 0 for indexing
-        self.mint_count().set(0u64);
+        self.mint_count().set(0u32);
 
         Ok(())
     }
@@ -35,8 +40,8 @@ pub trait NftManager {
 
     #[only_owner]
     #[payable("EGLD")]
-    #[endpoint(issueToken)]
-    fn issue_token(&self, token_name: ManagedBuffer, token_ticker: ManagedBuffer) -> AsyncCall {
+    #[endpoint(issueNft)]
+    fn issue_nft(&self, token_name: ManagedBuffer, token_ticker: ManagedBuffer) -> AsyncCall {
         require!(self.nft_token_id().is_empty(), "Token already issued");
 
         // save token name
@@ -149,7 +154,9 @@ pub trait NftManager {
     // /// private
 
     fn _mint(&self) -> u64 {
-        self.require_token_issued();
+        use alloc::string::ToString;
+
+        // self.require_token_issued();
 
         let nft_token_id = self.nft_token_id().get();
 
@@ -164,17 +171,36 @@ pub trait NftManager {
             .sha256_legacy(&attributes.to_boxed_bytes().as_slice());
         let hash_buffer = ManagedBuffer::from(attributes_hash.as_bytes());
 
-        let mint_count = self.mint_count().get();
+        let mint_id = self.mint_count().get() + 1;
 
         let mut name = ManagedBuffer::new();
         name.append(&self.nft_token_name().get());
         name.append(&ManagedBuffer::new_from_bytes(HASH_TAG));
-        name.append(&ManagedBuffer::from(&mint_count.to_ne_bytes()));
+        name.append(&ManagedBuffer::new_from_bytes(mint_id.to_string().as_bytes()));
 
-        let mut uri = ManagedBuffer::new();
-        uri.append(&ManagedBuffer::new_from_bytes(URI_SLASH));
-        uri.append(&ManagedBuffer::from(&mint_count.to_ne_bytes()));
-        let uris = ManagedVec::from_single_item(uri);
+        sc_print!("name: {:x}", name,);
+
+        let mut uris = ManagedVec::new();
+        
+        let mut image_uri = ManagedBuffer::new();
+        image_uri.append(&self.image_base_uri().get());
+        image_uri.append(&ManagedBuffer::new_from_bytes(URI_SLASH));
+        image_uri.append(&ManagedBuffer::new_from_bytes(mint_id.to_string().as_bytes()));
+        image_uri.append(&ManagedBuffer::new_from_bytes(IMAGE_FILE_EXTENSION));
+
+        sc_print!("name: {:x}", image_uri);
+
+        uris.push(image_uri);
+
+        let mut metadata_uri = ManagedBuffer::new();
+        metadata_uri.append(&self.image_base_uri().get());
+        metadata_uri.append(&ManagedBuffer::new_from_bytes(URI_SLASH));
+        metadata_uri.append(&ManagedBuffer::new_from_bytes(mint_id.to_string().as_bytes()));
+        metadata_uri.append(&ManagedBuffer::new_from_bytes(METADATA_FILE_EXTENSION));
+
+        sc_print!("name: {:x}", metadata_uri);
+
+        uris.push(metadata_uri);
 
         let nft_nonce = self.send().esdt_nft_create(
             &nft_token_id,
@@ -234,7 +260,7 @@ pub trait NftManager {
 
     #[view(getMintCount)]
     #[storage_mapper("mint_count")]
-    fn mint_count(&self) -> SingleValueMapper<u64>;
+    fn mint_count(&self) -> SingleValueMapper<u32>;
 
     // base metadatas
 
@@ -246,7 +272,11 @@ pub trait NftManager {
     #[storage_mapper("royalties")]
     fn royalties(&self) -> SingleValueMapper<u32>;
 
-    #[view(getBaseUri)]
-    #[storage_mapper("base_uri")]
-    fn base_uri(&self) -> SingleValueMapper<ManagedBuffer>;
+    #[view(getImageBaseUri)]
+    #[storage_mapper("image_base_uri")]
+    fn image_base_uri(&self) -> SingleValueMapper<ManagedBuffer>;
+
+    #[view(getMetadataBaseUri)]
+    #[storage_mapper("metadata_base_uri")]
+    fn metadata_base_uri(&self) -> SingleValueMapper<ManagedBuffer>;
 }

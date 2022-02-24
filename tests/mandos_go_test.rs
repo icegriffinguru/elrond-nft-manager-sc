@@ -42,19 +42,23 @@ where
         let payment_token_id = TokenIdentifier::from(payment_token_id_bytes);
         let nft_token_price = BigUint::from(1000_000_000_000_000_000 as u64);
         let royalties: u32 = 300;
-        let base_uri = ManagedBuffer::<DebugApi>::from(b"base_uri");
+        let image_base_uri = ManagedBuffer::<DebugApi>::from(b"https://ipfs.io/ipfs/QmXSFnUfdot3SgLsuZFdpefXii31YuyvtAD23NKdz9toar");
+        let metadata_base_uri = ManagedBuffer::<DebugApi>::from(b"https://ipfs.io/ipfs/QmS1Zn9ytigCjkNtQPAduFuzptadNw2kC9asptoYq9ZBwS");
 
         let result = sc.init(
             payment_token_id,
             nft_token_price,
             royalties,
-            base_uri
+            image_base_uri,
+            metadata_base_uri
         );
         assert_eq!(result, SCResult::Ok(()));
 
         let token_name = ManagedBuffer::<DebugApi>::from(b"IceWorld");
         let token_ticker = ManagedBuffer::<DebugApi>::from(b"IWC");
-        sc.issue_token(token_name, token_ticker);
+        sc.issue_nft(token_name, token_ticker);
+
+        sc._mint();
 
         StateChange::Commit
     });
